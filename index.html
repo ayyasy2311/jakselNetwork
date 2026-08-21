@@ -1,213 +1,67 @@
 <!doctype html>
-<html lang="id">
-<head>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="initial-scale=1,user-scalable=no,maximum-scale=1,width=device-width">
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <title>WebGIS Jakarta Selatan</title>
-
-    <!-- Tailwind CSS & FontAwesome -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="resources/fontawesome-all.min.css">
-
-    <!-- Stylesheets Bawaan QGIS2Web / OpenLayers -->
-    <link rel="stylesheet" href="./resources/ol.css">
-    <link href="resources/photon-geocoder-autocomplete.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="./resources/ol-layerswitcher.css">
-    <link rel="stylesheet" href="./resources/qgis2web.css">
-
-    <style>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="initial-scale=1,user-scalable=no,maximum-scale=1,width=device-width">
+        <meta name="mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <link rel="stylesheet" href="./resources/ol.css">
+        <link rel="stylesheet" href="resources/fontawesome-all.min.css">
+        <link href="resources/photon-geocoder-autocomplete.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="./resources/ol-layerswitcher.css">
+        <link rel="stylesheet" href="./resources/qgis2web.css">
+        <style>
         html, body {
+            background-color: #ffffff;
+        }
+        .ol-control > * {
+            background-color: #f8f8f8!important;
+            color: #444444!important;
+            border-radius: 0px;
+        }
+        .ol-attribution a, .gcd-gl-input::placeholder, .search-layer-input-search::placeholder {
+            color: #444444!important;
+        }
+        .search-layer-input-search {
+            background-color: #f8f8f8!important;
+        }
+        .ol-control > *:focus, .ol-control >*:hover {
+            background-color: rgba(248, 248, 248, 0.7)!important;
+        } 
+        .ol-control {
+            background-color: rgba(255,255,255,.4) !important;
+            padding: 2px !important;
+        } 
+        </style>
+
+        <style>
+        html, body, #map {
             width: 100%;
             height: 100%;
             padding: 0;
             margin: 0;
-            overflow: hidden;
-            font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
         }
-
-        #map {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 1;
-        }
-
-        /* Geser kontrol bawaan OpenLayers agar tidak tertutup header */
-        .ol-control {
-            pointer-events: auto !important;
-            background-color: rgba(255, 255, 255, 0.9) !important;
-            backdrop-filter: blur(8px);
-            border-radius: 8px !important;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
-        }
-
-        .ol-popup {
-            pointer-events: auto !important;
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-radius: 12px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
-            padding: 14px;
-            bottom: 12px;
-            left: -50px;
-            min-width: 240px;
-        }
-
-        .ol-popup-closer {
-            text-decoration: none;
-            position: absolute;
-            top: 10px;
-            right: 12px;
-            color: #94a3b8;
-            font-weight: bold;
-        }
-        .ol-popup-closer:after { content: "✕"; }
-
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-    </style>
-</head>
-<body class="relative bg-slate-100 text-slate-800">
-
-    <!-- KONTAINER PETA -->
-    <div id="map">
-        <div id="popup" class="ol-popup">
-            <a href="#" id="popup-closer" class="ol-popup-closer"></a>
-            <div id="popup-content" class="text-xs text-slate-700 leading-relaxed"></div>
+        </style>
+        <title></title>
+    </head>
+    <body>
+        <div id="map">
+            <div id="popup" class="ol-popup">
+                <a href="#" id="popup-closer" class="ol-popup-closer"></a>
+                <div id="popup-content"></div>
+            </div>
         </div>
-    </div>
-
-    <!-- OVERLAY UI PANEL -->
-    <div class="fixed inset-0 z-10 pointer-events-none p-4 flex flex-col justify-between items-end">
-        
-        <!-- HEADER DIGESER KE KANAN ATAS (Agar tidak menutupi tombol Zoom & Search OpenLayers di Kiri) -->
-        <header class="bg-white/90 backdrop-blur-md px-5 py-3 rounded-2xl shadow-md border border-slate-200 pointer-events-auto max-w-md w-full sm:w-auto">
-            <div class="flex items-center space-x-3">
-                <div class="p-2 bg-blue-600 text-white rounded-xl shadow-sm">
-                    <i class="fas fa-hospital-user text-sm"></i>
-                </div>
-                <div>
-                    <h1 class="text-sm font-bold text-slate-900 leading-tight">WebGIS Jakarta Selatan</h1>
-                    <p class="text-[11px] text-slate-500 font-medium">Pemetaan Fasilitas Kesehatan & Jaringan Jalan</p>
-                </div>
-            </div>
-        </header>
-
-        <!-- SIDEBAR INTERAKTIF & DINAMIS -->
-        <aside id="sidebar" class="mt-3 w-72 bg-white/90 backdrop-blur-md p-4 rounded-2xl shadow-lg border border-slate-200 space-y-4 max-h-[calc(100vh-6rem)] overflow-y-auto no-scrollbar pointer-events-auto transition-all">
-            
-            <!-- Ringkasan Statistik Dinamis -->
-            <div>
-                <h2 class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Statistik Otomatis</h2>
-                <div class="grid grid-cols-2 gap-2">
-                    <div class="bg-rose-50 border border-rose-100 p-2.5 rounded-xl">
-                        <div class="flex items-center space-x-1.5 text-rose-600 mb-0.5">
-                            <i class="fas fa-hospital text-xs"></i>
-                            <span class="text-[10px] font-semibold">Rumah Sakit</span>
-                        </div>
-                        <span id="count-rs" class="text-base font-extrabold text-rose-900">...</span>
-                    </div>
-                    <div class="bg-emerald-50 border border-emerald-100 p-2.5 rounded-xl">
-                        <div class="flex items-center space-x-1.5 text-emerald-600 mb-0.5">
-                            <i class="fas fa-clinic-medical text-xs"></i>
-                            <span class="text-[10px] font-semibold">Puskesmas</span>
-                        </div>
-                        <span id="count-puskesmas" class="text-base font-extrabold text-emerald-900">...</span>
-                    </div>
-                </div>
-            </div>
-
-            <hr class="border-slate-200/80">
-
-            <!-- Kontrol Layer Interaktif (Toggle On/Off) -->
-            <div>
-                <h2 class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Kontrol Layer</h2>
-                <ul class="space-y-1.5 text-xs text-slate-700 font-medium">
-                    <li onclick="toggleLayerByName('rumahsakit_jaksel_3', 'icon-rs')" class="flex items-center justify-between p-2 rounded-xl hover:bg-slate-100 cursor-pointer transition select-none">
-                        <div class="flex items-center space-x-2">
-                            <span class="w-3 h-3 bg-rose-500 rounded-full shadow-sm"></span>
-                            <span>Rumah Sakit</span>
-                        </div>
-                        <i id="icon-rs" class="fas fa-eye text-blue-600"></i>
-                    </li>
-                    <li onclick="toggleLayerByName('puskesmas_jaksel_2', 'icon-puskesmas')" class="flex items-center justify-between p-2 rounded-xl hover:bg-slate-100 cursor-pointer transition select-none">
-                        <div class="flex items-center space-x-2">
-                            <span class="w-3 h-3 bg-emerald-500 rounded-full shadow-sm"></span>
-                            <span>Puskesmas</span>
-                        </div>
-                        <i id="icon-puskesmas" class="fas fa-eye text-blue-600"></i>
-                    </li>
-                    <li onclick="toggleLayerByName('jalan_jaksel_1', 'icon-jalan')" class="flex items-center justify-between p-2 rounded-xl hover:bg-slate-100 cursor-pointer transition select-none">
-                        <div class="flex items-center space-x-2">
-                            <span class="w-5 h-0.5 bg-amber-500 inline-block"></span>
-                            <span>Jaringan Jalan</span>
-                        </div>
-                        <i id="icon-jalan" class="fas fa-eye text-blue-600"></i>
-                    </li>
-                </ul>
-            </div>
-        </aside>
-    </div>
-
-    <!-- SCRIPT QGIS2WEB BAWAAN -->
-    <script src="resources/qgis2web_expressions.js"></script>
-    <script src="./resources/functions.js"></script>
-    <script src="./resources/ol.js"></script>
-    <script src="./resources/ol-layerswitcher.js"></script>
-    <script src="resources/photon-geocoder-autocomplete.min.js"></script>
-    <script src="resources/olms.js"></script>
-    <script src="layers/jalan_jaksel_1.js"></script>
-    <script src="layers/puskesmas_jaksel_2.js"></script>
-    <script src="layers/rumahsakit_jaksel_3.js"></script>
-    <script src="styles/jalan_jaksel_1_style.js"></script>
-    <script src="styles/puskesmas_jaksel_2_style.js"></script>
-    <script src="styles/rumahsakit_jaksel_3_style.js"></script>
-    <script src="./layers/layers.js" type="text/javascript"></script> 
-    <script src="./resources/Autolinker.min.js"></script>
-    <script src="./resources/qgis2web.js"></script> 
-
-    <!-- SCRIPT DINAMIS & INTERAKTIF -->
-    <script>
-        // 1. Fungsi Toggle Layer Interaktif
-        function toggleLayerByName(layerTitle, iconId) {
-            if (typeof map === 'undefined') return;
-            
-            map.getLayers().forEach(function(layer) {
-                if (layer.get('title') && layer.get('title').includes(layerTitle)) {
-                    const isVisible = layer.getVisible();
-                    layer.setVisible(!isVisible);
-                    
-                    const icon = document.getElementById(iconId);
-                    if (icon) {
-                        if (!isVisible) {
-                            icon.className = "fas fa-eye text-blue-600";
-                        } else {
-                            icon.className = "fas fa-eye-slash text-slate-300";
-                        }
-                    }
-                }
-            });
-        }
-
-        // 2. Hitung Otomatis Jumlah Fitur (Statistik Dinamis)
-        window.addEventListener('load', function() {
-            setTimeout(function() {
-                if (typeof json_rumahsakit_jaksel_3 !== 'undefined') {
-                    document.getElementById('count-rs').innerText = json_rumahsakit_jaksel_3.features.length;
-                }
-                if (typeof json_puskesmas_jaksel_2 !== 'undefined') {
-                    document.getElementById('count-puskesmas').innerText = json_puskesmas_jaksel_2.features.length;
-                }
-                if (typeof map !== 'undefined') {
-                    map.updateSize();
-                }
-            }, 500);
-        });
-    </script>
-</body>
+        <script src="resources/qgis2web_expressions.js"></script>
+        <script src="./resources/functions.js"></script>
+        <script src="./resources/ol.js"></script>
+        <script src="./resources/ol-layerswitcher.js"></script>
+        <script src="resources/photon-geocoder-autocomplete.min.js"></script>
+        <script src="resources/olms.js"></script>
+        <script src="layers/jalan_jaksel_1.js"></script><script src="layers/puskesmas_jaksel_2.js"></script><script src="layers/rumahsakit_jaksel_3.js"></script>
+        <script src="styles/jalan_jaksel_1_style.js"></script><script src="styles/puskesmas_jaksel_2_style.js"></script><script src="styles/rumahsakit_jaksel_3_style.js"></script>
+        <script src="./layers/layers.js" type="text/javascript"></script> 
+        <script src="./resources/Autolinker.min.js"></script>
+        <script src="./resources/qgis2web.js"></script>        
+    </body>
 </html>
